@@ -22,6 +22,8 @@ private slots:
     void processError(const QString &s);
     void processTimeout(const QString &s);
 
+    void on_downloadButton_clicked();
+
 private:
     Ui::MainWindow *ui;
     MasterThread m_thread;

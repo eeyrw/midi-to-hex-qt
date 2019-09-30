@@ -31,12 +31,16 @@ void MainWindow::showResponse(const QString &s)
     //                        .arg(++m_transactionCount)
     //                        .arg(m_requestLineEdit->text())
     //                        .arg(s));
+
 }
 
 void MainWindow::processError(const QString &s)
 {
     //setControlsEnabled(true);
     //m_statusLabel->setText(tr("Status: Not running, %1.").arg(s));
+    ui->logViewer->appendPlainText(tr("Status: Not running, %1.").arg(s));
+    ui->logViewer->appendPlainText(tr("No traffic."));
+
     //m_trafficLabel->setText(tr("No traffic."));
 }
 
@@ -45,6 +49,8 @@ void MainWindow::processTimeout(const QString &s)
     //setControlsEnabled(true);
     //m_statusLabel->setText(tr("Status: Running, %1.").arg(s));
     //m_trafficLabel->setText(tr("No traffic."));
+    ui->logViewer->appendPlainText(tr("Status: Not running, %1.").arg(s));
+    ui->logViewer->appendPlainText(tr("No traffic."));
 }
 
 MainWindow::~MainWindow()
@@ -57,3 +63,8 @@ void MainWindow::on_fileListView_currentRowChanged(int currentRow)
     qDebug(QString("%1").arg(currentRow).toLatin1());
 }
 
+
+void MainWindow::on_downloadButton_clicked()
+{
+    m_thread.transaction("COM1",10,"dfgfdg");
+}
