@@ -67,31 +67,33 @@ MasterThread::~MasterThread()
     m_mutex.unlock();
     wait();
 }
-//! [0]
 
-//! [1] //! [2]
-void MasterThread::transaction(const QString &portName, int waitTimeout, const QString &request)
+
+int MasterThread::SendCmd(char cmd,QByteArray &cmdData)
 {
-//! [1]
+
+}
+
+void MasterThread::download(const QString &portName, int waitTimeout, const QString &filePath)
+{
+
     const QMutexLocker locker(&m_mutex);
     m_portName = portName;
     m_waitTimeout = waitTimeout;
-    m_request = request;
-//! [3]
+    m_filePath = filePath;
     if (!isRunning())
         start();
     else
         m_cond.wakeOne();
 }
-//! [2] //! [3]
 
-//! [4]
+
 void MasterThread::run()
 {
     bool currentPortNameChanged = false;
 
     m_mutex.lock();
-//! [4] //! [5]
+
     QString currentPortName;
     if (currentPortName != m_portName) {
         currentPortName = m_portName;
@@ -99,9 +101,9 @@ void MasterThread::run()
     }
 
     int currentWaitTimeout = m_waitTimeout;
-    QString currentRequest = m_request;
+    QString currentRequest = m_filePath;
     m_mutex.unlock();
-//! [5] //! [6]
+
     QSerialPort serial;
 
     if (currentPortName.isEmpty()) {
@@ -110,7 +112,7 @@ void MasterThread::run()
     }
 
     while (!m_quit) {
-//![6] //! [7]
+
         if (currentPortNameChanged) {
             serial.close();
             serial.setPortName(currentPortName);
@@ -121,12 +123,12 @@ void MasterThread::run()
                 return;
             }
         }
-//! [7] //! [8]
+
         // write request
         const QByteArray requestData = currentRequest.toUtf8();
         serial.write(requestData);
         if (serial.waitForBytesWritten(m_waitTimeout)) {
-//! [8] //! [10]
+
             // read response
             if (serial.waitForReadyRead(currentWaitTimeout)) {
                 QByteArray responseData = serial.readAll();
@@ -134,19 +136,15 @@ void MasterThread::run()
                     responseData += serial.readAll();
 
                 const QString response = QString::fromUtf8(responseData);
-//! [12]
                 emit this->response(response);
-//! [10] //! [11] //! [12]
             } else {
                 emit timeout(tr("Wait read response timeout %1")
                              .arg(QTime::currentTime().toString()));
             }
-//! [9] //! [11]
         } else {
             emit timeout(tr("Wait write request timeout %1")
                          .arg(QTime::currentTime().toString()));
         }
-//! [9]  //! [13]
         m_mutex.lock();
         m_cond.wait(&m_mutex);
         if (currentPortName != m_portName) {
@@ -156,8 +154,7 @@ void MasterThread::run()
             currentPortNameChanged = false;
         }
         currentWaitTimeout = m_waitTimeout;
-        currentRequest = m_request;
+        currentRequest = m_filePath;
         m_mutex.unlock();
     }
-//! [13]
 }

@@ -7,19 +7,35 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    QListWidgetItem *item;
-    for (int i = 0; i < 10; ++i) {
-        item = new QListWidgetItem();
-        QString l=QString("%1").arg(i);
-        item->setText(l);
-        item->setToolTip(l);
+//    QListWidgetItem *item;
+//    for (int i = 0; i < 20; ++i) {
+//        item = new QListWidgetItem();
+//        QString l=QString("%1").arg(i);
+//        item->setText(l);
+//        item->setToolTip(l);
+//        item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+//        item->setCheckState(Qt::Unchecked);
+//        ui->fileListView->addItem(item);
+//    }
+
+    fileListModel=new QStandardItemModel();
+
+    for (int row = 0; row < 20; ++row){
+
+        QStandardItem *item = new QStandardItem(QString("%1").arg(row) );    //    行2
+        item->setCheckable( true );
+        item->setCheckState( Qt::Unchecked );
         item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-        item->setCheckState(Qt::Unchecked);
-        ui->fileListView->addItem(item);
+        fileListModel->appendRow(item);
     }
+    ui->fileListView->setModel (fileListModel );
+    showProgress(0.7);
+
     connect(&m_thread, &MasterThread::response, this, &MainWindow::showResponse);
     connect(&m_thread, &MasterThread::error, this, &MainWindow::processError);
     connect(&m_thread, &MasterThread::timeout, this, &MainWindow::processTimeout);
+    connect(&m_thread, &MasterThread::progress, this, &MainWindow::showProgress);
+
 }
 
 void MainWindow::showResponse(const QString &s)
@@ -36,22 +52,19 @@ void MainWindow::showResponse(const QString &s)
 
 void MainWindow::processError(const QString &s)
 {
-    //setControlsEnabled(true);
-    //m_statusLabel->setText(tr("Status: Not running, %1.").arg(s));
     ui->logViewer->appendPlainText(tr("Status: Not running, %1.").arg(s));
-    ui->logViewer->appendPlainText(tr("No traffic."));
-
-    //m_trafficLabel->setText(tr("No traffic."));
 }
 
 void MainWindow::processTimeout(const QString &s)
 {
-    //setControlsEnabled(true);
-    //m_statusLabel->setText(tr("Status: Running, %1.").arg(s));
-    //m_trafficLabel->setText(tr("No traffic."));
     ui->logViewer->appendPlainText(tr("Status: Not running, %1.").arg(s));
-    ui->logViewer->appendPlainText(tr("No traffic."));
 }
+
+void MainWindow::showProgress(float progress)
+{
+ui->downloadProgressBar->setValue(progress*ui->downloadProgressBar->maximum());
+}
+
 
 MainWindow::~MainWindow()
 {
@@ -66,5 +79,6 @@ void MainWindow::on_fileListView_currentRowChanged(int currentRow)
 
 void MainWindow::on_downloadButton_clicked()
 {
-    m_thread.transaction("COM1",10,"dfgfdg");
+    m_thread.download("COM1",10,"dfgfdg");
+
 }

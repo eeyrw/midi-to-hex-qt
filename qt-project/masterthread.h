@@ -64,18 +64,21 @@ public:
     explicit MasterThread(QObject *parent = nullptr);
     ~MasterThread();
 
-    void transaction(const QString &portName, int waitTimeout, const QString &request);
+    void download(const QString &portName, int waitTimeout, const QString &filePath);
 
 signals:
     void response(const QString &s);
     void error(const QString &s);
     void timeout(const QString &s);
+    void progress(float progress);
 
 private:
     void run() override;
+    int SendCmd(char cmd,QByteArray &cmdData);
+
 
     QString m_portName;
-    QString m_request;
+    QString m_filePath;
     int m_waitTimeout = 0;
     QMutex m_mutex;
     QWaitCondition m_cond;
