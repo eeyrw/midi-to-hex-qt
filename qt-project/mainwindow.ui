@@ -39,6 +39,20 @@
      <number>24</number>
     </property>
     <item>
+     <widget class="QLabel" name="label_3">
+      <property name="text">
+       <string>Serial Port ( Auto detection by USB vid and pid )</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QComboBox" name="serialPortComobox">
+      <property name="editable">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item>
      <widget class="QLabel" name="label">
       <property name="text">
        <string>Midi File List</string>

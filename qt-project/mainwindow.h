@@ -6,6 +6,9 @@
 #include <QStandardItemModel>
 #include <QFileDialog>
 #include <QDebug>
+#include <QtSerialPort>
+
+Q_DECLARE_METATYPE(QSerialPortInfo)
 
 namespace Ui {
 class MainWindow;
@@ -35,6 +38,10 @@ private:
     MasterThread m_thread;
     QStandardItemModel *fileListModel;
     QString currentScoreDataFilePath;
+    QList<QSerialPortInfo> serialPortList;
+    void updateSerialPortList();
+    void autoSelectSerialPortByVidPid(uint16_t vid,uint16_t pid);
+
 };
 
 #endif // MAINWINDOW_H

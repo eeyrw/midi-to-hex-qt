@@ -29,14 +29,48 @@ MainWindow::MainWindow(QWidget *parent) :
         item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
         fileListModel->appendRow(item);
     }
-    ui->fileListView->setModel (fileListModel );
-    showProgress(0.7f);
+    ui->fileListView->setModel (fileListModel);
 
     connect(&m_thread, &MasterThread::response, this, &MainWindow::showResponse);
     connect(&m_thread, &MasterThread::error, this, &MainWindow::processError);
     connect(&m_thread, &MasterThread::timeout, this, &MainWindow::processTimeout);
     connect(&m_thread, &MasterThread::progress, this, &MainWindow::showProgress);
 
+    updateSerialPortList();
+    autoSelectSerialPortByVidPid(0x1a86,0x7523);
+
+}
+
+void MainWindow::updateSerialPortList()
+{
+    serialPortList = QSerialPortInfo::availablePorts();
+    for (const QSerialPortInfo &info : serialPortList) {
+        QString s = QObject::tr("Port: ") + info.portName() + "-"
+                + QObject::tr("Serial number: ") + info.serialNumber() + "-"
+                + QObject::tr("Vendor Identifier: ") + (info.hasVendorIdentifier() ? QString::number(info.vendorIdentifier(), 16) : QString()) + "-"
+                + QObject::tr("Product Identifier: ") + (info.hasProductIdentifier() ? QString::number(info.productIdentifier(), 16) : QString()) + "-"
+                + QObject::tr("Busy: ") + (info.isBusy() ? QObject::tr("Yes") : QObject::tr("No"));
+        ui->serialPortComobox->addItem(s,QVariant::fromValue(info));
+    }
+
+}
+
+void MainWindow::autoSelectSerialPortByVidPid(uint16_t vid,uint16_t pid)
+{
+    for(auto i=0;i!=ui->serialPortComobox->count();i++)
+    {
+        auto info=ui->serialPortComobox->itemData(i);
+        if(info.canConvert<QSerialPortInfo>())
+        {
+            QSerialPortInfo sinfo=info.value<QSerialPortInfo>();
+            if(vid==sinfo.vendorIdentifier() &&
+                    pid==sinfo.productIdentifier())
+            {
+                ui->serialPortComobox->setCurrentIndex(i);
+            }
+        }
+
+    }
 }
 
 void MainWindow::showResponse(const QString &s)
@@ -73,8 +107,9 @@ void MainWindow::on_fileListView_currentRowChanged(int currentRow)
 
 void MainWindow::on_downloadButton_clicked()
 {
-    m_thread.download("COM6",10,currentScoreDataFilePath);
-
+    auto sinfo=ui->serialPortComobox->currentData().value<QSerialPortInfo>();
+    auto selectedPort=sinfo.portName();
+    m_thread.download(selectedPort,10,currentScoreDataFilePath);
 }
 
 void MainWindow::on_loadScoreDataFileButton_clicked()
