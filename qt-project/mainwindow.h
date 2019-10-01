@@ -4,7 +4,8 @@
 #include <QMainWindow>
 #include "masterthread.h"
 #include <QStandardItemModel>
-
+#include <QFileDialog>
+#include <QDebug>
 
 namespace Ui {
 class MainWindow;
@@ -27,10 +28,13 @@ private slots:
 
     void on_downloadButton_clicked();
 
+    void on_loadScoreDataFileButton_clicked();
+
 private:
     Ui::MainWindow *ui;
     MasterThread m_thread;
     QStandardItemModel *fileListModel;
+    QString currentScoreDataFilePath;
 };
 
 #endif // MAINWINDOW_H

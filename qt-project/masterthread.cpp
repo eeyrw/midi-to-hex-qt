@@ -50,8 +50,7 @@
 
 #include "masterthread.h"
 
-#include <QSerialPort>
-#include <QTime>
+
 
 MasterThread::MasterThread(QObject *parent) :
     QThread(parent)
@@ -69,11 +68,201 @@ MasterThread::~MasterThread()
 }
 
 
-int MasterThread::SendCmd(char cmd,QByteArray &cmdData)
+
+std::ifstream::pos_type MasterThread::filesize(const char* filename)
 {
+    std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
+    return in.tellg();
+}
+
+bool MasterThread::downloadProcess()
+{
+#if defined(Q_OS_WIN32)
+    std::string dataFilePath=m_filePath.toLocal8Bit().constData();
+#else
+    std::string dataFilePath=m_filePath.toUtf8().constData();
+#endif
+
+    bool result = true;
+
+    auto dataSize = filesize(dataFilePath.c_str());
+    auto totalSize = dataSize;
+    std::stringstream ss;
+    ss<<"Data File Szie: "<<dataSize<<endl;
+    emit response(QString::fromStdString(ss.str()));
+
+    std::ifstream scoreDataFile(dataFilePath,std::ios_base::binary);
+    uint32_t flashSize;
+    if(!readFlashSize(flashSize))
+    {
+        result=false;
+        goto ret;
+    }
+    ss.clear();
+    ss<<"Flash Szie: "<<flashSize<<endl;
+    emit response(QString::fromStdString(ss.str()));
+
+    if(!flashStart())
+    {
+        result=false;
+        goto ret;
+    }
+
+    char blockTemp[512];
+    char retData[4];
+    int blockIndex=0;
+    while(dataSize>0)
+    {
+        scoreDataFile.read(blockTemp,512);
+        auto readNum=scoreDataFile.gcount();
+        ByteStream cmdData = ByteStream(1024);
+        cmdData.writeUInt16(static_cast<uint16_t>(blockIndex));
+        cmdData.writeUInt16(static_cast<uint16_t>(readNum));
+        cmdData.writeBytes(blockTemp,static_cast<uint32_t>(readNum));
+        if(sendCmdPacket(0x02,cmdData.getBuffer(),cmdData.size()))
+        {
+            if(!recvCmDRetData(0x02,retData,sizeof(retData)))
+            {
+                result=false;
+                break;
+            }
+
+            dataSize-=readNum;
+            blockIndex++;
+            float p=(float)(totalSize-dataSize)/totalSize;
+            emit progress(p);
+        }else
+        {
+            result=false;
+            break;
+        }
+    }
+    if(!flashEnd())
+    {
+        result=false;
+        goto ret;
+    }
+ret:
+    return result;
+}
+
+
+bool MasterThread::flashStart()
+{
+    bool result = true;
+    if(sendCmdPacket(0x01,nullptr,0))
+    {
+        if(!recvCmDRetData(0x01,nullptr,0))
+            result=false;
+    }else
+    {
+        result=false;
+    }
+    return result;
+}
+
+bool MasterThread::flashEnd()
+{
+    bool result = true;
+    if(sendCmdPacket(0x03,nullptr,0))
+    {
+        if(!recvCmDRetData(0x03,nullptr,0))
+            result=false;
+    }else
+    {
+        result=false;
+    }
+    return result;
+}
+
+bool MasterThread::readFlashSize(uint32_t &flahSize)
+{
+    char recvCmdData[4];
+    bool result = true;
+    if(sendCmdPacket(0x04,nullptr,0))
+    {
+        if(!recvCmDRetData(0x04,recvCmdData,sizeof(recvCmdData)))
+        {
+            result=false;
+        }
+    }else
+    {
+        result=false;
+    }
+    flahSize=*((uint32_t*)recvCmdData);
+    return result;
 
 }
 
+bool MasterThread::recvCmDRetData(char cmd, char cmdData[], uint32_t cmdDataLen)
+{
+    uint32_t totalFrameLength = 2 + 2 + 1 + cmdDataLen;
+    char* frameBuf =new char[totalFrameLength];
+    bool result = false;
+    // read response
+    int acutalRead=0;
+    if (serial.waitForReadyRead(500)) {
+        acutalRead=serial.read(frameBuf,totalFrameLength);
+        if(acutalRead!=totalFrameLength)
+        {
+            emit timeout(tr("Wrong frame length!"));
+            goto ret;
+        }
+        ByteStream cmdRetFrame(totalFrameLength);
+        cmdRetFrame.writeBytes(frameBuf,totalFrameLength);
+        if(cmdRetFrame.readUInt16(0)!=0x776e)
+        {
+            emit timeout(tr("Wrong frame ID received!"));
+            goto ret;
+        }
+        int revCmdDataLen=cmdRetFrame.readUInt16(2)-1;
+        if(revCmdDataLen!=cmdDataLen)
+        {
+            emit timeout(tr("Wrong wanted cmd return data length!"));
+            goto ret;
+        }
+        char recvCmd=cmdRetFrame.readUInt8(4);
+        if(recvCmd!=cmd)
+        {
+            emit timeout(tr("Wrong cmd ID!"));
+            goto ret;
+        }
+        cmdRetFrame.readBytes(cmdData,cmdDataLen,5);
+
+    } else {
+        emit timeout(tr("Wait read response timeout %1")
+                     .arg(QTime::currentTime().toString()));
+        goto ret;
+    }
+    result=true;
+
+ret:
+    delete [] frameBuf;
+    return result;
+
+}
+
+bool MasterThread::sendCmdPacket(char cmd, const char cmdData[], uint32_t cmdLen)
+{
+    uint16_t totalFrameLength = 2 + 2 + 1 + cmdLen;
+    ByteStream frame = ByteStream(totalFrameLength);
+    frame.writeUInt16(0x776e);
+    frame.writeUInt16(cmdLen+1);
+    frame.writeUInt8(cmd);
+    frame.writeBytes(cmdData, cmdLen);
+    int written;
+    // write request
+    written = serial.write(frame.getBuffer(),frame.size());
+    if (!serial.waitForBytesWritten(100)) {
+
+        emit timeout(tr("Wait write request timeout %1")
+                     .arg(QTime::currentTime().toString()));
+    }
+    if (written == frame.size())
+        return true;
+    else
+        return false;
+}
 void MasterThread::download(const QString &portName, int waitTimeout, const QString &filePath)
 {
 
@@ -104,7 +293,7 @@ void MasterThread::run()
     QString currentRequest = m_filePath;
     m_mutex.unlock();
 
-    QSerialPort serial;
+
 
     if (currentPortName.isEmpty()) {
         emit error(tr("No port name specified"));
@@ -116,7 +305,11 @@ void MasterThread::run()
         if (currentPortNameChanged) {
             serial.close();
             serial.setPortName(currentPortName);
-
+            serial.setBaudRate(115200);
+            serial.setDataBits(QSerialPort::Data8);
+            serial.setParity(QSerialPort::NoParity);
+            serial.setStopBits(QSerialPort::OneStop);
+            serial.setFlowControl(QSerialPort::NoFlowControl);
             if (!serial.open(QIODevice::ReadWrite)) {
                 emit error(tr("Can't open %1, error code %2")
                            .arg(m_portName).arg(serial.error()));
@@ -124,27 +317,12 @@ void MasterThread::run()
             }
         }
 
-        // write request
-        const QByteArray requestData = currentRequest.toUtf8();
-        serial.write(requestData);
-        if (serial.waitForBytesWritten(m_waitTimeout)) {
+        if(!downloadProcess())
+            emit error(tr("Fail to download."));
+        else
+            emit response(tr("Download successfully"));
 
-            // read response
-            if (serial.waitForReadyRead(currentWaitTimeout)) {
-                QByteArray responseData = serial.readAll();
-                while (serial.waitForReadyRead(10))
-                    responseData += serial.readAll();
 
-                const QString response = QString::fromUtf8(responseData);
-                emit this->response(response);
-            } else {
-                emit timeout(tr("Wait read response timeout %1")
-                             .arg(QTime::currentTime().toString()));
-            }
-        } else {
-            emit timeout(tr("Wait write request timeout %1")
-                         .arg(QTime::currentTime().toString()));
-        }
         m_mutex.lock();
         m_cond.wait(&m_mutex);
         if (currentPortName != m_portName) {

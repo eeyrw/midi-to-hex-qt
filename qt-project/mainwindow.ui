@@ -50,7 +50,7 @@
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
         <horstretch>0</horstretch>
-        <verstretch>4</verstretch>
+        <verstretch>3</verstretch>
        </sizepolicy>
       </property>
       <property name="editTriggers">
@@ -97,6 +97,16 @@
       </property>
       <property name="invertedAppearance">
        <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="loadScoreDataFileButton">
+      <property name="acceptDrops">
+       <bool>true</bool>
+      </property>
+      <property name="text">
+       <string>Load External Score Data File</string>
       </property>
      </widget>
     </item>

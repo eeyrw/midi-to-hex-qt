@@ -54,6 +54,18 @@
 #include <QMutex>
 #include <QThread>
 #include <QWaitCondition>
+#include <ctype.h>
+#include <cstring>
+#include <cstdio>
+#include <iostream>
+#include <vector>
+#include <fstream>
+#include "ByteStream.h"
+#include <QSerialPort>
+#include <QTime>
+#include <sstream>
+
+using namespace std;
 
 //! [0]
 class MasterThread : public QThread
@@ -75,8 +87,17 @@ signals:
 private:
     void run() override;
     int SendCmd(char cmd,QByteArray &cmdData);
+    bool sendCmdPacket(char cmd, const char cmdData[], uint32_t cmdLen);
+    bool recvCmDRetData(char cmd, char cmdData[], uint32_t cmdDataLen);
+    bool downloadProcess();
+    bool readFlashSize(uint32_t &flahSize);
+    bool flashStart();
+    bool flashEnd();
+
+    std::ifstream::pos_type filesize(const char* filename);
 
 
+    QSerialPort serial;
     QString m_portName;
     QString m_filePath;
     int m_waitTimeout = 0;

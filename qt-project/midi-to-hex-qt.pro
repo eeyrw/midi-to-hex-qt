@@ -23,13 +23,38 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += \
+        ByteStream.cpp \
+        NoteListProcessor.cpp \
+        bprinter/src/table_printer.cpp \
+        fmt/src/format.cc \
         main.cpp \
         mainwindow.cpp \
-        masterthread.cpp
+        masterthread.cpp \
+        midifile/src/Binasc.cpp \
+        midifile/src/MidiEvent.cpp \
+        midifile/src/MidiEventList.cpp \
+        midifile/src/MidiFile.cpp \
+        midifile/src/MidiMessage.cpp \
+        midifile/src/Options.cpp
 
 HEADERS += \
+        ByteStream.h \
+        NoteListProcessor.h \
+        bprinter/include/bprinter/impl/table_printer.tpp.h \
+        bprinter/include/bprinter/table_printer.h \
         mainwindow.h \
-        masterthread.h
+        masterthread.h \
+        midifile/include/Binasc.h \
+        midifile/include/MidiEvent.h \
+        midifile/include/MidiEventList.h \
+        midifile/include/MidiFile.h \
+        midifile/include/MidiMessage.h \
+        midifile/include/Options.h
 
 FORMS += \
         mainwindow.ui
+
+INCLUDEPATH += $$PWD/midifile/include \
+               $$PWD/bprinter/include \
+               $$PWD/fmt/include \
+
