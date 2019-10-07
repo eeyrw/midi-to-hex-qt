@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "masterthread.h"
+#include "downloadthread.h"
 #include <QStandardItemModel>
 #include <QFileDialog>
 #include <QDebug>
@@ -24,10 +24,10 @@ public:
 
 private slots:
     void on_fileListView_currentRowChanged(int currentRow);
-    void showResponse(const QString &s);
-    void processError(const QString &s);
-    void processTimeout(const QString &s);
-    void showProgress(float progress);
+    void appendStatusInfo(const QString &s);
+    void appendErrorInfo(const QString &s);
+    void appendTimeoutInfo(const QString &s);
+    void setProgressInfo(float progress);
 
     void on_downloadButton_clicked();
 
@@ -35,7 +35,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    MasterThread m_thread;
+    DownloadThread m_thread;
     QStandardItemModel *fileListModel;
     QString currentScoreDataFilePath;
     QList<QSerialPortInfo> serialPortList;

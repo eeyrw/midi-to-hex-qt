@@ -68,13 +68,13 @@
 using namespace std;
 
 //! [0]
-class MasterThread : public QThread
+class DownloadThread : public QThread
 {
     Q_OBJECT
 
 public:
-    explicit MasterThread(QObject *parent = nullptr);
-    ~MasterThread();
+    explicit DownloadThread(QObject *parent = nullptr);
+    ~DownloadThread();
 
     void download(const QString &portName, int waitTimeout, const QString &filePath);
 

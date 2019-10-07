@@ -31,10 +31,10 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     ui->fileListView->setModel (fileListModel);
 
-    connect(&m_thread, &MasterThread::response, this, &MainWindow::showResponse);
-    connect(&m_thread, &MasterThread::error, this, &MainWindow::processError);
-    connect(&m_thread, &MasterThread::timeout, this, &MainWindow::processTimeout);
-    connect(&m_thread, &MasterThread::progress, this, &MainWindow::showProgress);
+    connect(&m_thread, &DownloadThread::response, this, &MainWindow::appendStatusInfo);
+    connect(&m_thread, &DownloadThread::error, this, &MainWindow::appendErrorInfo);
+    connect(&m_thread, &DownloadThread::timeout, this, &MainWindow::appendTimeoutInfo);
+    connect(&m_thread, &DownloadThread::progress, this, &MainWindow::setProgressInfo);
 
     updateSerialPortList();
     autoSelectSerialPortByVidPid(0x1a86,0x7523);
@@ -57,7 +57,8 @@ void MainWindow::updateSerialPortList()
 
 void MainWindow::autoSelectSerialPortByVidPid(uint16_t vid,uint16_t pid)
 {
-    for(auto i=0;i!=ui->serialPortComobox->count();i++)
+    auto i=0;
+    for(i=0;i!=ui->serialPortComobox->count();i++)
     {
         auto info=ui->serialPortComobox->itemData(i);
         if(info.canConvert<QSerialPortInfo>())
@@ -67,28 +68,30 @@ void MainWindow::autoSelectSerialPortByVidPid(uint16_t vid,uint16_t pid)
                     pid==sinfo.productIdentifier())
             {
                 ui->serialPortComobox->setCurrentIndex(i);
+                            break;
             }
         }
-
     }
+    if(i==ui->serialPortComobox->count())
+        ui->serialPortComobox->setCurrentIndex(-1);
 }
 
-void MainWindow::showResponse(const QString &s)
+void MainWindow::appendStatusInfo(const QString &s)
 {
     ui->logViewer->appendPlainText("Status: "+s);
 }
 
-void MainWindow::processError(const QString &s)
+void MainWindow::appendErrorInfo(const QString &s)
 {
     ui->logViewer->appendPlainText("Error: "+s);
 }
 
-void MainWindow::processTimeout(const QString &s)
+void MainWindow::appendTimeoutInfo(const QString &s)
 {
     ui->logViewer->appendPlainText("TimeOut: "+s);
 }
 
-void MainWindow::showProgress(float progress)
+void MainWindow::setProgressInfo(float progress)
 {
     ui->downloadProgressBar->setValue(progress*ui->downloadProgressBar->maximum());
 }
@@ -134,7 +137,7 @@ void MainWindow::on_loadScoreDataFileButton_clicked()
         if(fileNames.size()>0)
         {
             currentScoreDataFilePath=fileNames[0];
-            showResponse("Load Score Data File: "+currentScoreDataFilePath);
+            appendStatusInfo("Load Score Data File: "+currentScoreDataFilePath);
         }
     }
 }

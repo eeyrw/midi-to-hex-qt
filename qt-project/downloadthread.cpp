@@ -48,17 +48,17 @@
 **
 ****************************************************************************/
 
-#include "masterthread.h"
+#include "downloadthread.h"
 
 
 
-MasterThread::MasterThread(QObject *parent) :
+DownloadThread::DownloadThread(QObject *parent) :
     QThread(parent)
 {
 }
 
 //! [0]
-MasterThread::~MasterThread()
+DownloadThread::~DownloadThread()
 {
     m_mutex.lock();
     m_quit = true;
@@ -69,13 +69,13 @@ MasterThread::~MasterThread()
 
 
 
-std::ifstream::pos_type MasterThread::filesize(const char* filename)
+std::ifstream::pos_type DownloadThread::filesize(const char* filename)
 {
     std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
     return in.tellg();
 }
 
-bool MasterThread::downloadProcess()
+bool DownloadThread::downloadProcess()
 {
 #if defined(Q_OS_WIN32)
     std::string dataFilePath=m_filePath.toLocal8Bit().constData();
@@ -88,29 +88,38 @@ bool MasterThread::downloadProcess()
     auto dataSize = filesize(dataFilePath.c_str());
     auto totalSize = dataSize;
     std::stringstream ss;
-    ss<<"Data File Szie: "<<dataSize<<endl;
-    emit response(QString::fromStdString(ss.str()));
-
     std::ifstream scoreDataFile(dataFilePath,std::ios_base::binary);
     uint32_t flashSize;
+
+
+    char blockTemp[512];
+    char retData[4];
+    int blockIndex=0;
+
+    if(totalSize<=0)
+    {
+        emit error(tr("Fail to open data file!"));
+        result=false;
+        goto ret;
+    }
+
+    ss<<"Data File Size: "<<dataSize;
+    emit response(QString::fromStdString(ss.str()));
+
+
     if(!readFlashSize(flashSize))
     {
         result=false;
         goto ret;
     }
-    ss.clear();
-    ss<<"Flash Szie: "<<flashSize<<endl;
-    emit response(QString::fromStdString(ss.str()));
 
     if(!flashStart())
     {
         result=false;
         goto ret;
     }
+    emit response(tr("Downloading..."));
 
-    char blockTemp[512];
-    char retData[4];
-    int blockIndex=0;
     while(dataSize>0)
     {
         scoreDataFile.read(blockTemp,512);
@@ -147,7 +156,7 @@ ret:
 }
 
 
-bool MasterThread::flashStart()
+bool DownloadThread::flashStart()
 {
     bool result = true;
     if(sendCmdPacket(0x01,nullptr,0))
@@ -161,7 +170,7 @@ bool MasterThread::flashStart()
     return result;
 }
 
-bool MasterThread::flashEnd()
+bool DownloadThread::flashEnd()
 {
     bool result = true;
     if(sendCmdPacket(0x03,nullptr,0))
@@ -175,7 +184,7 @@ bool MasterThread::flashEnd()
     return result;
 }
 
-bool MasterThread::readFlashSize(uint32_t &flahSize)
+bool DownloadThread::readFlashSize(uint32_t &flahSize)
 {
     char recvCmdData[4];
     bool result = true;
@@ -194,7 +203,7 @@ bool MasterThread::readFlashSize(uint32_t &flahSize)
 
 }
 
-bool MasterThread::recvCmDRetData(char cmd, char cmdData[], uint32_t cmdDataLen)
+bool DownloadThread::recvCmDRetData(char cmd, char cmdData[], uint32_t cmdDataLen)
 {
     uint32_t totalFrameLength = 2 + 2 + 1 + cmdDataLen;
     char* frameBuf =new char[totalFrameLength];
@@ -242,7 +251,7 @@ ret:
 
 }
 
-bool MasterThread::sendCmdPacket(char cmd, const char cmdData[], uint32_t cmdLen)
+bool DownloadThread::sendCmdPacket(char cmd, const char cmdData[], uint32_t cmdLen)
 {
     uint16_t totalFrameLength = 2 + 2 + 1 + cmdLen;
     ByteStream frame = ByteStream(totalFrameLength);
@@ -263,7 +272,7 @@ bool MasterThread::sendCmdPacket(char cmd, const char cmdData[], uint32_t cmdLen
     else
         return false;
 }
-void MasterThread::download(const QString &portName, int waitTimeout, const QString &filePath)
+void DownloadThread::download(const QString &portName, int waitTimeout, const QString &filePath)
 {
 
     const QMutexLocker locker(&m_mutex);
@@ -277,7 +286,7 @@ void MasterThread::download(const QString &portName, int waitTimeout, const QStr
 }
 
 
-void MasterThread::run()
+void DownloadThread::run()
 {
     bool currentPortNameChanged = false;
 
