@@ -7,6 +7,12 @@
 #include <QFileDialog>
 #include <QDebug>
 #include <QtSerialPort>
+#include <QByteArray>
+
+#if defined(Q_OS_WIN32)
+#include <windows.h>
+#include <dbt.h>
+#endif
 
 Q_DECLARE_METATYPE(QSerialPortInfo)
 
@@ -43,6 +49,7 @@ private:
     QList<QSerialPortInfo> serialPortList;
     void updateSerialPortList();
     void autoSelectSerialPortByVidPid(uint16_t vid,uint16_t pid);
+    bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 
 };
 

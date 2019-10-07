@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
 using namespace std;
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -43,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::updateSerialPortList()
 {
+    ui->serialPortComobox->clear();
     serialPortList = QSerialPortInfo::availablePorts();
     for (const QSerialPortInfo &info : serialPortList) {
         QString s = QObject::tr("Port: ") + info.portName() + "-"
@@ -53,6 +53,54 @@ void MainWindow::updateSerialPortList()
         ui->serialPortComobox->addItem(s,QVariant::fromValue(info));
     }
 
+}
+
+bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, long *result)
+{
+    //在这里做你想要的操作
+    //其中eventType表明了此次消息的类型，message存储着具体是什么信息，result是个传出变量；
+    //eventType在windows操作系统下是"windows_generic_MSG"字符串，可以查看Qt的文档知道
+    //message表明这个信号附带哪些信息，在热插拔事件中是WM_DEVICECHANGE类型，具体windows定义了哪些，可以查看“Dbt.h”文件
+
+    //
+#if defined(Q_OS_WIN32)
+    if(eventType == QByteArray("windows_generic_MSG"))
+    {
+        //MSG是winApi定义的结构体，具体定义如下：
+        /*
+         * typedef struct tagMSG {
+         * HWND hwnd;
+         * UINT message;   //消息类型，热插拔是WM_DEVICECHANGE
+         * WPARAM wParam;  //对消息的进一步描述
+         * LPARAM lParam;  //指向一个结构体，结构中有好多消息
+         * DWORD time;     //产生时间
+         * POINT pt;       //鼠标坐标
+         * } MSG;
+        */
+        MSG *pMsg = reinterpret_cast<MSG*>(message);
+
+        if(pMsg->message == WM_DEVICECHANGE)
+        {
+            switch(pMsg->wParam)
+            {
+            //设备连上
+            case DBT_DEVICEARRIVAL:
+                updateSerialPortList();
+                autoSelectSerialPortByVidPid(0x1a86,0x7523);
+                break;
+            //设备断开
+            case DBT_DEVICEREMOVECOMPLETE:
+                updateSerialPortList();
+                autoSelectSerialPortByVidPid(0x1a86,0x7523);
+                break;
+            //其他的消息可以查看“Dbt.h”文件
+            }
+        }
+
+    }
+#endif
+
+    return false;
 }
 
 void MainWindow::autoSelectSerialPortByVidPid(uint16_t vid,uint16_t pid)
