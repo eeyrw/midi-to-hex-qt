@@ -127,6 +127,9 @@
       <property name="title">
        <string>Info</string>
       </property>
+      <property name="checkable">
+       <bool>false</bool>
+      </property>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
         <widget class="QPlainTextEdit" name="logViewer">

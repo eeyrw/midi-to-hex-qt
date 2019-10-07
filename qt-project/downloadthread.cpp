@@ -326,15 +326,19 @@ void DownloadThread::run()
             }
         }
 
-        if(!downloadProcess())
+        bool downloadRet=downloadProcess();
+
+        if(!downloadRet)
+        {
             emit error(tr("Fail to download."));
+        }
         else
             emit response(tr("Download successfully"));
 
 
         m_mutex.lock();
         m_cond.wait(&m_mutex);
-        if (currentPortName != m_portName) {
+        if (currentPortName != m_portName || downloadRet!=true) {
             currentPortName = m_portName;
             currentPortNameChanged = true;
         } else {
