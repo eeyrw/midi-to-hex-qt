@@ -117,12 +117,15 @@ void MainWindow::on_downloadButton_clicked()
 
 void MainWindow::on_loadScoreDataFileButton_clicked()
 {
+    QSettings setting("./midi-to-hex-qt-setting.ini", QSettings::IniFormat);          //为了能记住上次打开的路径
+    QString lastPath = setting.value("LastFilePath").toString();
+
     //定义文件对话框类
     QFileDialog *fileDialog = new QFileDialog(this);
     //定义文件对话框标题
     fileDialog->setWindowTitle(tr("Open Score Data File."));
     //设置默认文件路径
-    fileDialog->setDirectory(".");
+    fileDialog->setDirectory(lastPath);
     //设置文件过滤器
     fileDialog->setNameFilter(tr("Images(*.raw)"));
     //设置可以选择多个文件,默认为只能选择一个文件QFileDialog::ExistingFiles
@@ -138,6 +141,15 @@ void MainWindow::on_loadScoreDataFileButton_clicked()
         {
             currentScoreDataFilePath=fileNames[0];
             appendStatusInfo("Load Score Data File: "+currentScoreDataFilePath);
+            QFileInfo fi(currentScoreDataFilePath);
+            setting.setValue("LastFilePath",fi.absoluteDir().absolutePath());
+
         }
     }
+}
+
+void MainWindow::on_serialPortListRefreshButton_clicked()
+{
+    updateSerialPortList();
+    autoSelectSerialPortByVidPid(0x1a86,0x7523);
 }

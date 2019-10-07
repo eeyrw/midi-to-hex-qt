@@ -33,6 +33,8 @@ private slots:
 
     void on_loadScoreDataFileButton_clicked();
 
+    void on_serialPortListRefreshButton_clicked();
+
 private:
     Ui::MainWindow *ui;
     DownloadThread m_thread;
