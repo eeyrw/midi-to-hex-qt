@@ -7,28 +7,17 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    //    QListWidgetItem *item;
-    //    for (int i = 0; i < 20; ++i) {
-    //        item = new QListWidgetItem();
-    //        QString l=QString("%1").arg(i);
-    //        item->setText(l);
-    //        item->setToolTip(l);
-    //        item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-    //        item->setCheckState(Qt::Unchecked);
-    //        ui->fileListView->addItem(item);
-    //    }
+        QListWidgetItem *item;
+        for (int i = 0; i < 5; ++i) {
+            item = new QListWidgetItem();
+            QString l=QString("%1").arg(i);
+            item->setText(l);
+            item->setToolTip(l);
+            item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+            item->setCheckState(Qt::Unchecked);
+            ui->fileListWidget->addItem(item);
+        }
 
-    fileListModel=new QStandardItemModel();
-
-    for (int row = 0; row < 20; ++row){
-
-        QStandardItem *item = new QStandardItem(QString("%1").arg(row) );    //    行2
-        item->setCheckable( true );
-        item->setCheckState( Qt::Unchecked );
-        item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-        fileListModel->appendRow(item);
-    }
-    ui->fileListView->setModel (fileListModel);
 
     connect(&m_thread, &DownloadThread::response, this, &MainWindow::appendStatusInfo);
     connect(&m_thread, &DownloadThread::error, this, &MainWindow::appendErrorInfo);

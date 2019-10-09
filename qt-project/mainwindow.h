@@ -3,7 +3,6 @@
 
 #include <QMainWindow>
 #include "downloadthread.h"
-#include <QStandardItemModel>
 #include <QFileDialog>
 #include <QDebug>
 #include <QtSerialPort>
@@ -44,7 +43,6 @@ private slots:
 private:
     Ui::MainWindow *ui;
     DownloadThread m_thread;
-    QStandardItemModel *fileListModel;
     QString currentScoreDataFilePath;
     QList<QSerialPortInfo> serialPortList;
     void updateSerialPortList();

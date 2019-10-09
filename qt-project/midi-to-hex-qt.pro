@@ -24,6 +24,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         ByteStream.cpp \
+    MidiFileListWidget.cpp \
         NoteListProcessor.cpp \
         bprinter/src/table_printer.cpp \
         downloadthread.cpp \
@@ -49,7 +50,8 @@ HEADERS += \
         midifile/include/MidiEventList.h \
         midifile/include/MidiFile.h \
         midifile/include/MidiMessage.h \
-        midifile/include/Options.h \
+        midifile/include/Options.h \ \
+    midifilelistwidget.h
 
 FORMS += \
         mainwindow.ui

@@ -15,6 +15,9 @@
     <family>Segoe UI</family>
    </font>
   </property>
+  <property name="mouseTracking">
+   <bool>false</bool>
+  </property>
   <property name="windowTitle">
    <string>Midi To Music Box</string>
   </property>
@@ -24,6 +27,9 @@
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
+   </property>
+   <property name="mouseTracking">
+    <bool>false</bool>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <property name="leftMargin">
@@ -81,35 +87,23 @@
         <verstretch>5</verstretch>
        </sizepolicy>
       </property>
+      <property name="mouseTracking">
+       <bool>false</bool>
+      </property>
       <property name="title">
        <string>Midi File List</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
-        <widget class="QListView" name="fileListView">
+        <widget class="MidiFileListWidget" name="fileListWidget">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
            <verstretch>3</verstretch>
           </sizepolicy>
          </property>
-         <property name="editTriggers">
-          <set>QAbstractItemView::NoEditTriggers</set>
-         </property>
-         <property name="dragEnabled">
-          <bool>true</bool>
-         </property>
-         <property name="dragDropOverwriteMode">
+         <property name="mouseTracking">
           <bool>false</bool>
-         </property>
-         <property name="dragDropMode">
-          <enum>QAbstractItemView::DragDrop</enum>
-         </property>
-         <property name="defaultDropAction">
-          <enum>Qt::MoveAction</enum>
-         </property>
-         <property name="alternatingRowColors">
-          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -248,6 +242,13 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>MidiFileListWidget</class>
+   <extends>QListWidget</extends>
+   <header>midifilelistwidget.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
