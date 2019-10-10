@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include "downloadthread.h"
+#include "NoteListProcessor.h"
+#include "scoreprojectmanager.h"
 #include <QFileDialog>
 #include <QDebug>
 #include <QtSerialPort>
@@ -14,6 +16,11 @@
 #endif
 
 Q_DECLARE_METATYPE(QSerialPortInfo)
+
+using namespace std;
+using namespace smf;
+using bprinter::TablePrinter;
+using noteListProcessor::NoteListProcessor;
 
 namespace Ui {
 class MainWindow;

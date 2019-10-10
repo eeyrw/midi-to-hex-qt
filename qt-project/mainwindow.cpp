@@ -174,9 +174,81 @@ void MainWindow::on_loadScoreDataFileButton_clicked()
             appendStatusInfo("Load Score Data File: "+currentScoreDataFilePath);
             QFileInfo fi(currentScoreDataFilePath);
             setting.setValue("LastFilePath",fi.absoluteDir().absolutePath());
-
+            auto sinfo=ui->serialPortComobox->currentData().value<QSerialPortInfo>();
+            auto selectedPort=sinfo.portName();
+            m_thread.download(selectedPort,10,currentScoreDataFilePath);
+            m_thread.download(selectedPort,10,currentScoreDataFilePath);
         }
     }
+}
+
+
+void generateScoreListMemAndScore(QVector<ScoreItem> &scoreList)
+{
+      std::ifstream stream(midiFileListPath);
+      std::string path;
+      vector<char> scoreMem;
+      vector<string> pathList;
+
+      for(ScoreItem &score:scoreList)
+      {    if (score.selected)
+          {
+                ifstream f(path.c_str());
+                if (f.good())
+                      pathList.push_back(path);
+                else
+                      cout << "Cannot find midi file:" << path;
+          }
+
+      }
+
+      ByteStream scoreListMem = ByteStream(128 * 1024);
+
+      string identifer = "SCRE";
+      scoreListMem.writeBytes(identifer.c_str(), 4);
+      scoreListMem.writeUInt32(pathList.size());
+      int scoreMemPointer = scoreListMem.size() + sizeof(uint32_t) * pathList.size();
+      int headerOffest;
+      double totalDuration = 0;
+
+      std::ofstream logFileStream;
+      logFileStream.open("ScoreListGen.log");
+
+      for (auto midiFilePath : pathList)
+      {
+            vector<char> mem;
+            NoteListProcessor np = NoteListProcessor(midiFilePath, &logFileStream);
+                  //np.recommLowestPitch = options.getInteger("lower");
+                  //np.recommHighestPitch = options.getInteger("upper");
+
+            logFileStream << "File: " << midiFilePath << '\n';
+            np.analyzeNoteMapByCentroid();
+            np.transposeTickNoteMap();
+            np.generateDeltaBin(mem);
+            scoreListMem.writeUInt32(scoreMemPointer);
+            scoreMemPointer += mem.size();
+            std::move(mem.begin(), mem.end(), std::back_inserter(scoreMem));
+            totalDuration += np.midiDuration;
+            logFileStream << "\n\n";
+      }
+      headerOffest = scoreListMem.size();
+
+      scoreListMem.writeBytes(scoreMem.data(), scoreMem.size());
+
+      vector<char> scoreListMemVector(scoreListMem.size());
+      scoreListMem.readBytes(scoreListMemVector.data(), scoreListMem.size(), 0);
+      std::ofstream ofile("scoreList_qt.raw", std::ios::binary);
+      ofile.write(scoreListMemVector.data(), scoreListMem.size());
+
+      logFileStream << "\n\n\n=============================================\n";
+      logFileStream << "Score Count: " << pathList.size() << '\n';
+      logFileStream << "Total Mem Size (byte): " << scoreListMem.size() + headerOffest << '\n';
+      logFileStream << "Score Data Mem Size (byte): " << scoreListMem.size() << '\n';
+      int dur = static_cast<int>(totalDuration);
+      logFileStream << "Total Duration: " << dur / 3600 << "h "
+                    << dur / 60 % 60 << "m "
+                    << dur % 60 << "s " << '\n';
+      logFileStream.close();
 }
 
 void MainWindow::on_serialPortListRefreshButton_clicked()
