@@ -40,6 +40,12 @@ private slots:
 
     void on_serialPortListRefreshButton_clicked();
 
+    void on_itemRemoveButton_clicked();
+
+    void on_itemAddButton_clicked();
+
+    void on_itemModifyButton_clicked();
+
 private:
     Ui::MainWindow *ui;
     DownloadThread m_thread;

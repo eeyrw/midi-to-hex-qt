@@ -4,8 +4,7 @@ MidiFileListWidget::MidiFileListWidget(QWidget *parent)
     : QListWidget(parent)
 {
     //允许拖放
-        setAcceptDrops(true);
-        isInDragExternalFileStatus=false;
+    setAcceptDrops(true);
 }
 
 void MidiFileListWidget::mousePressEvent(QMouseEvent *event)
@@ -37,9 +36,8 @@ void MidiFileListWidget::dragEnterEvent(QDragEnterEvent *event)
         //确认是一个移动的操作
         event->setDropAction(Qt::MoveAction);
         event->accept();
-    }else if(event->mimeData()->hasFormat("text/uri-list")) {
-   isInDragExternalFileStatus=true;
-   //setMouseTracking(isInDragExternalFileStatus);
+    }
+    else if(event->mimeData()->hasFormat("text/uri-list")) {
         event->acceptProposedAction();
     }
     focusWidget();
@@ -59,20 +57,14 @@ void MidiFileListWidget::dragMoveEvent(QDragMoveEvent *event)
 
 void MidiFileListWidget::dropEvent(QDropEvent *event)
 {
-    MidiFileListWidget *source =
-            qobject_cast<MidiFileListWidget *>(event->source());
-            //找到当前鼠标位置在部件中的项.
-     auto item = this->itemAt(event->pos());
+    MidiFileListWidget *source =qobject_cast<MidiFileListWidget *>(event->source());
+    //找到当前鼠标位置在部件中的项.
+    auto item = this->itemAt(event->pos());
     if (source && source == this) {
-
-
-        //
         if (!item)
-            this->addItem("QListWidgetItem(dragItem)");
+            this->addItem(dragItem->clone());
         else
-            this->insertItem(this->row(item)+1,"QListWidgetItem(dragItem)");
-        //得到数据并增加到列表中
-        //addItem(dragItem);
+            this->insertItem(this->row(item)+1,dragItem->clone());
         event->setDropAction(Qt::MoveAction);
         event->accept();
     }else
@@ -85,12 +77,9 @@ void MidiFileListWidget::dropEvent(QDropEvent *event)
         {
             QString fileName = url.toLocalFile();
             if (!fileName.isEmpty()) {
-                this->insertItem(this->row(item)+1,fileName);
+                addFileItem(fileName,true,row(item)+1);
             }
         }
-   isInDragExternalFileStatus=false;
-   //setMouseTracking(isInDragExternalFileStatus);
-
     }
 }
 
@@ -102,13 +91,53 @@ void MidiFileListWidget::performDrag()
     if (item) {
         QMimeData *mimeData = new QMimeData;
         mimeData->setText(item->text());
-
         QDrag *drag = new QDrag(this);
         drag->setMimeData(mimeData);
-        drag->setPixmap(QPixmap(":/images/person.png"));
+        //drag->setPixmap(QPixmap(":/images/person.png"));
         //进行拖动操作
         auto result=drag->exec(Qt::MoveAction);
         if(result==Qt::MoveAction)
             delete  item;
     }
 }
+
+void MidiFileListWidget::addFileItem(QString filePath,bool selected,int rowIndex)
+{
+    QListWidgetItem *item= new QListWidgetItem();
+    QFileInfo fileInfo(filePath);
+    QString filename(fileInfo.fileName());
+    item->setText(filename);
+    item->setToolTip(filePath);
+    item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+    item->setCheckState(selected?Qt::Checked:Qt::Unchecked);
+    item->setData(FILE_ITEM_PATH,filePath);
+    item->setData(FILE_ITEM_CHECK_STATUS,selected);
+    if(rowIndex>=0)
+        insertItem(rowIndex,item);
+    else
+        addItem(item);
+}
+
+void MidiFileListWidget::removeFileItem(int rowIndex)
+{
+    if(rowIndex>=0)
+        takeItem(rowIndex);
+    else
+        takeItem(currentRow());
+}
+
+void MidiFileListWidget::modifyFileTtem(QString filePath,int rowIndex)
+{
+    QListWidgetItem *item;
+    if(rowIndex>=0)
+        item=this->item(rowIndex);
+    else
+        item=currentItem();
+
+    QFileInfo fileInfo(filePath);
+    QString filename(fileInfo.fileName());
+    item->setText(filename);
+    item->setToolTip(filePath);
+    item->setData(FILE_ITEM_PATH,filePath);
+}
+

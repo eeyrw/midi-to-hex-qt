@@ -7,16 +7,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-        QListWidgetItem *item;
-        for (int i = 0; i < 5; ++i) {
-            item = new QListWidgetItem();
-            QString l=QString("%1").arg(i);
-            item->setText(l);
-            item->setToolTip(l);
-            item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-            item->setCheckState(Qt::Unchecked);
-            ui->fileListWidget->addItem(item);
-        }
+    for (int i = 0; i < 5; ++i) {
+        QString l=QString("%1").arg(i);
+        ui->fileListWidget->addFileItem(l,true);
+    }
 
 
     connect(&m_thread, &DownloadThread::response, this, &MainWindow::appendStatusInfo);
@@ -77,12 +71,12 @@ bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, long *r
                 updateSerialPortList();
                 autoSelectSerialPortByVidPid(0x1a86,0x7523);
                 break;
-            //设备断开
+                //设备断开
             case DBT_DEVICEREMOVECOMPLETE:
                 updateSerialPortList();
                 autoSelectSerialPortByVidPid(0x1a86,0x7523);
                 break;
-            //其他的消息可以查看“Dbt.h”文件
+                //其他的消息可以查看“Dbt.h”文件
             }
         }
 
@@ -105,7 +99,7 @@ void MainWindow::autoSelectSerialPortByVidPid(uint16_t vid,uint16_t pid)
                     pid==sinfo.productIdentifier())
             {
                 ui->serialPortComobox->setCurrentIndex(i);
-                            break;
+                break;
             }
         }
     }
@@ -189,4 +183,60 @@ void MainWindow::on_serialPortListRefreshButton_clicked()
 {
     updateSerialPortList();
     autoSelectSerialPortByVidPid(0x1a86,0x7523);
+}
+
+void MainWindow::on_itemRemoveButton_clicked()
+{
+    ui->fileListWidget->removeFileItem();
+}
+
+void MainWindow::on_itemAddButton_clicked()
+{
+    QSettings setting("./midi-to-hex-qt-setting.ini", QSettings::IniFormat);          //为了能记住上次打开的路径
+    QString lastPath = setting.value("LastMidiFilePath").toString();
+
+    QFileDialog *fileDialog = new QFileDialog(this);
+    fileDialog->setWindowTitle(tr("Add midi file(s)."));
+    fileDialog->setDirectory(lastPath);
+    fileDialog->setNameFilter(tr("Midi(*.mid)"));
+    fileDialog->setFileMode(QFileDialog::ExistingFiles);
+    fileDialog->setViewMode(QFileDialog::Detail);
+
+    QStringList fileNames;
+    if(fileDialog->exec())
+    {
+        fileNames = fileDialog->selectedFiles();
+        for(auto &fileName:fileNames)
+        {
+            appendStatusInfo("Add midi file: "+fileName);
+            QFileInfo fi(fileName);
+            setting.setValue("LastMidiFilePath",fi.absoluteDir().absolutePath());
+            ui->fileListWidget->addFileItem(fileName,true);
+        }
+    }
+}
+
+void MainWindow::on_itemModifyButton_clicked()
+{
+    QSettings setting("./midi-to-hex-qt-setting.ini", QSettings::IniFormat);          //为了能记住上次打开的路径
+    QString lastPath = setting.value("LastMidiFilePath").toString();
+
+    QFileDialog *fileDialog = new QFileDialog(this);
+    fileDialog->setWindowTitle(tr("Modify midi file."));
+    fileDialog->setDirectory(lastPath);
+    fileDialog->setNameFilter(tr("Midi(*.mid)"));
+    fileDialog->setViewMode(QFileDialog::Detail);
+
+    QStringList fileNames;
+    if(fileDialog->exec())
+    {
+        fileNames = fileDialog->selectedFiles();
+        for(auto &fileName:fileNames)
+        {
+            appendStatusInfo("Add midi file: "+fileName);
+            QFileInfo fi(fileName);
+            setting.setValue("LastMidiFilePath",fi.absoluteDir().absolutePath());
+            ui->fileListWidget->modifyFileTtem(fileName);
+        }
+    }
 }

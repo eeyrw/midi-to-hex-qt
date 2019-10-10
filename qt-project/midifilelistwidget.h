@@ -9,12 +9,20 @@
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>
 #include <QMouseEvent>
+#include <QFileInfo>
+
+#define FILE_ITEM_PATH Qt::UserRole+1
+#define FILE_ITEM_CHECK_STATUS Qt::UserRole+2
 
 class MidiFileListWidget : public QListWidget
 {
     Q_OBJECT
 public:
     MidiFileListWidget(QWidget *parent = 0);
+    void addFileItem(QString filePath,bool selected=false,int rowIndex=-1);
+    void removeFileItem(int rowIndex=-1);
+    void modifyFileTtem(QString filePath,int rowIndex=-1);
+
 
 protected:
     void mousePressEvent(QMouseEvent *event);
@@ -28,7 +36,6 @@ private:
 
     QListWidgetItem *dragItem;
     QPoint startPos;
-    bool isInDragExternalFileStatus;
 };
 
 #endif // MIDIFILELISTWIDGET_H
