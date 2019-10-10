@@ -3,7 +3,6 @@
 MidiFileListWidget::MidiFileListWidget(QWidget *parent)
     : QListWidget(parent)
 {
-    //允许拖放
     setAcceptDrops(true);
 }
 

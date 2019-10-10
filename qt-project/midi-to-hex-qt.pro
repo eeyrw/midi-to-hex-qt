@@ -37,6 +37,7 @@ SOURCES += \
         midifile/src/MidiFile.cpp \
         midifile/src/MidiMessage.cpp \
         midifile/src/Options.cpp \
+    scoreprojectmanager.cpp
 
 HEADERS += \
         ByteStream.h \
@@ -51,7 +52,8 @@ HEADERS += \
         midifile/include/MidiFile.h \
         midifile/include/MidiMessage.h \
         midifile/include/Options.h \ \
-    midifilelistwidget.h
+    midifilelistwidget.h \
+    scoreprojectmanager.h
 
 FORMS += \
         mainwindow.ui
