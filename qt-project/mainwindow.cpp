@@ -185,7 +185,6 @@ void MainWindow::on_loadScoreDataFileButton_clicked()
 
 void generateScoreListMemAndScore(QVector<ScoreItem> &scoreList)
 {
-      std::ifstream stream(midiFileListPath);
       std::string path;
       vector<char> scoreMem;
       vector<string> pathList;
